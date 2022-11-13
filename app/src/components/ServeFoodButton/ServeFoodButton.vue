@@ -1,12 +1,15 @@
 <template>
     <div class='block-serve-button'>
         <p class='block-serve'>
-        <button class="serve-button">พร้อมเสิร์ฟ</button>
+        <button class="serve-button" @click="onClick()">พร้อมเสิร์ฟ</button>
         </p>
     </div>
 </template>
-
-
+<script>
+export default {
+    props: ['onClick']
+}
+</script>
 <style>
 .block-serve-button {
     width: 400px;

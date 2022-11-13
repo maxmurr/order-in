@@ -93,6 +93,7 @@ export default {
         {label: 'สรุปข้อมูล', icon: 'signal_cellular_alt', router: '/management/dashboard' ,activeId: 0,},
         {label: 'รายการอาหาร', icon: 'restaurant_menu', router: '/management/menu',activeId: 0,},
         {label: 'โปรโมชัน', icon: 'grid_view', router: '/management/promotion',activeId: 0,},
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
       accountItems: [
         {name: 'nanazen', role:'manager'},

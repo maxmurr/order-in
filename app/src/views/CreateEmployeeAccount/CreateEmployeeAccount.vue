@@ -54,25 +54,29 @@
         <div class="set-display-column-account ">
           <label class="set-margin text-xl">ชื่อ-นามสกุล</label>
           <input type="text" v-model="user.name" class="input-field-create-employee-account flex justify-center" placeholder="name">
+          <label class="label-small">{{ this.nameNoti }}</label>
         </div>
 
         <div class="set-display-column-account ">
           <label class="set-margin text-xl">ชื่อผู้ใช้</label>
           <input type="text" v-model="user.username" class="input-field-create-employee-account" placeholder="username">
+          <label class="label-small">{{ this.usernameNoti }}</label>
         </div>
 
         <div class="set-display-column-account ">
           <label class="set-margin text-xl">อีเมล</label>
           <input type="text" v-model="user.email" class="input-field-create-employee-account" placeholder="email">
+          <label class="label-small">{{ this.emailNoti }}</label>
         </div>
 
         <div class="set-display-column-account ">
           <label class="set-margin text-xl">รหัสผ่าน</label>
           <input type="password" v-model="user.password" class="input-field-create-employee-account" placeholder="password">
+          <label class="label-small">{{ this.passNoti }}</label>
         </div>
 
         <div class="flex justify-end mb-5">
-          <button @click="createAnAccount" class="button-blue button-style">สร้างบัญชี</button>
+          <button @click="createAnAccount()" class="button-blue button-style">สร้างบัญชี</button>
         </div>
       </div>
 
@@ -82,6 +86,9 @@
 
 <script>
 import NavItem from "../../components/NavBarDrawer/NavItem.vue";
+import { useEmployeeStore } from "../../stores/employee.js";
+import {authAPI} from '../../services/api';
+
 export default {
   /*To Do List
  *
@@ -94,9 +101,19 @@ export default {
  * ส่วน 2 แสดงข้อมูล reviews ทั้งหมด นี่ทำให้เป็น scollbar ไว้ให้แล้วแค่่ดึงดึงข้อมูลมาวน
  * ส่วน 3 ฺBar chart รายรับรายจ่ายในแต่ละวัน
  * */
+  setup() {
+    const employee_store = useEmployeeStore()
+    const response = null
+    return { employee_store }
+  },
   name: "App",
   data() {
     return {
+      error: null,
+      nameNoti : '',
+      usernameNoti : '',
+      emailNoti : '',
+      passNoti : '',
       user: {
         name: '',
         username: '',
@@ -111,6 +128,7 @@ export default {
         {label: 'สรุปข้อมูล', icon: 'signal_cellular_alt', router: '/management/dashboard' ,activeId: 0,},
         {label: 'รายการอาหาร', icon: 'restaurant_menu', router: '/management/menu',activeId: 0,},
         {label: 'โปรโมชัน', icon: 'grid_view', router: '/management/promotion',activeId: 0,},
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
     }
   },
@@ -122,13 +140,28 @@ export default {
       this.showMobileMenu = !this.showMobileMenu;
     },
     async createAnAccount() {
+      // console.warn("values: ",this.user.username,this.user.password)
       try {
         this.error = null;
-        const employee_id = await this.review_store.save(this.employee);
-        if (employee_id) {
-          this.$router.push(`/management/account/employee-account-list`);
+        /**
+         *             'name' => 'required|string|max:255',
+         *             'username' => 'required|string|unique:users',
+         *             'email' => 'required|string|email|max:255|unique:users',
+         *             'password' => 'required|string|min:6',
+         *             'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+         */
+        this.response = await authAPI.registerEmployee(this.user);
+        this.$router.push(`/management/account/employee-account-list`);
+        if (response.status_code == 201) {
+          console.log(response.data);
         }
+
       } catch (error) {
+        // this.nameNoti = '3';
+        // this.usernameNoti = this.response.data.username ;
+        // this.emailNoti = this.response.data.email;
+        // this.passNoti = this.response.data.password;
+
         console.log(error);
         this.error = error.message;
       }
@@ -209,6 +242,7 @@ export default {
 .nav-menu-management {
   display: flex;
   flex-direction: row;
+  gap: 16px;
 }
 .nav-content {
   display: flex;

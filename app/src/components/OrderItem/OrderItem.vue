@@ -49,7 +49,6 @@ import OrderConfirmDeletePopup from '../OrderConfirmDeletePopup.vue';
 import {ref} from 'vue';
 
 export default {
-  // props: ['order'],
   props: [
     'id',
     'order_status',
@@ -58,10 +57,9 @@ export default {
     'order_price',
     'order_quantity',
     'order_request',
+    'onDeleteOrder',
     'showDeleteDialog',
   ],
-  // (DeletePopup ใน component OrderConfirmDeletePopup
-  // = กดปุ่มแล้วแสดง popup ให้ confirm deleteOrder)
   setup() {
     const popupTrigger = ref({
       buttonTrigger: false,
@@ -75,9 +73,10 @@ export default {
   },
 
   methods: {
-    // กดปุ่ม'เอาออก'เพื่อยืนยัน แล้วลบorderที่ได้เอามาใส่ในถาด
     deleteOrder() {
-
+      console.log(this.onDeleteOrder);
+      this.onDeleteOrder(this.id);
+      this.popupTrigger.value.buttonTrigger = false;
     },
 
   },

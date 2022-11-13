@@ -8,7 +8,7 @@
         </span>
         </button>
       </i>
-    <div class="
+      <div class="
           w-64
           absolute
           inset-y-0
@@ -20,39 +20,38 @@
           duration-200
           ease-in-out
           "
-         :class="this.showMobileMenu ? 'relative -translate-x-0' : 'closed-menu'"
-    >
-      <h3 class="headline-small ml-4 mb6-4">ชื่อร้าน</h3>
-      <NavItem
-          v-for="(item, index) in navItems"
-          :id="index"
-          :label="item.label"
-          :active="item.activeId"
-          :onClickItem="onClickItem"
-          :key="index"
+           :class="this.showMobileMenu ? 'relative -translate-x-0' : 'closed-menu'"
       >
-        <span class="material-symbols-outlined">{{item.icon}}</span>
+        <h3 class="headline-small ml-4 mb6-4">ชื่อร้าน</h3>
+        <NavItem
+            v-for="(item, index) in navItems"
+            :id="index"
+            :label="item.label"
+            :url="item.router"
+            :active="item.activeId"
+            :onClickItem="onClickItem"
+            :key="index"
+        >
+          <span class="material-symbols-outlined">{{item.icon}}</span>
 
-      </NavItem>
-    </div>
+        </NavItem>
+      </div>
     </div>
 
     <div class="basis-3/4 ml-10">
-        <div>
-          <h3 class="headline-large">Dashboard</h3>
-        </div>
-
-
+      <div>
+        <h3 class="headline-large">Dashboard</h3>
+      </div>
       <div class="main-content-dashboard mr-20">
         <div class="topic">
           <h3 class="body-large ml-3">ความพึงพอใจต่ออาหารจากการประเมินของลูกค้า</h3>
         </div>
         <div class="block-body">
-        <GChart
-            type="PieChart"
-            :options="options"
-            :data="data"
-        />
+          <GChart
+              type="PieChart"
+              :options="options"
+              :data="ratingStat"
+          />
         </div>
 
         <div class="topic">
@@ -61,9 +60,9 @@
 
         <div class="scroller">
           <div class="review-container"
-              v-for="(review, index) in reviews" :key="index"
+               v-for="(review, index) in reviews" :key="index"
           >
-              <p class="body-medium"> {{ review.feedback }} </p>
+            <p class="body-medium"> {{ review.feedback }} </p>
           </div>
         </div>
 
@@ -72,11 +71,11 @@
         </div>
 
         <div class="block-body">
-        <GChart
-            type="Histogram"
-            :options="options"
-            :data="data"
-        />
+          <GChart
+              type="Histogram"
+              :options="options"
+              :data="ratingStat"
+          />
 
         </div>
       </div>
@@ -88,45 +87,31 @@
 import NavItem from "../../components/NavBarDrawer/NavItem.vue";
 import BannerCard from "../../components/BannerCard.vue";
 import { GChart } from "vue-google-charts";
+import {useRatingStore} from "../../stores/rating";
+import {useReviewStore} from "../../stores/review";
+
 export default {
-  /*To Do List
- *
- * - Data -
- * ต้องมีการดึงค่าข้อมูล Review มาแสดงในรายการอาหารที่แสดง
- *
- * - Method -
- *ไม่แน่ใจว่าต้องใช้ไรเพิ่มเติมอีกอะ แต่ในหน้าคือจะประกอบด้วย 3 ส่วน
- * ส่วน 1 Piechart ข้อมูล rating
- * ส่วน 2 แสดงข้อมูล reviews ทั้งหมด นี่ทำให้เป็น scollbar ไว้ให้แล้วแค่่ดึงดึงข้อมูลมาวน
- * ส่วน 3 ฺBar chart รายรับรายจ่ายในแต่ละวัน
- * */
   name: "App",
+  setup() {
+    const ratingStore = useRatingStore();
+    const reviewStore = useReviewStore();
+    return {ratingStore, reviewStore};
+  },
+  created() {
+    this.getData();
+  },
   data() {
     return {
       showMobileMenu: false,
       loopCount: 4,
+      ratings: [],
+      reviews: [],
       navItems: [
         {label: 'ข้อมูลบัญชี', icon: 'account_circle', router: '/management/account/employee-account-list',activeId: 0,},
         {label: 'สรุปข้อมูล', icon: 'signal_cellular_alt', router: '/management/Dashboard' ,activeId: 1,},
         {label: 'รายการอาหาร', icon: 'restaurant_menu', router: '/management/menu',activeId: 0,},
         {label: 'โปรโมชัน', icon: 'grid_view', router: '/management/promotion',activeId: 0,},
-      ],
-      reviews: [
-        {feedback: 'ดีมาก ๆ เลยค่ะ'},
-        {feedback: 'ร้านสะอาดมากค่ะ อาหารก็อร่อย'},
-        {feedback: 'ราคาเป็นมิตรวัตถุดิบคุณภาพดี'},
-        {feedback: 'ร้านใหญ่เกินต้านมากค่ะ'},
-        {feedback: 'สุดยอดไปเลยต่ะ'},
-        {feedback: 'อาหารอร่อย ราคาสมเหตุสมผล'},
-      ],
-
-      data: [
-        ['Rating', 'Score'],
-        ['5 Stars', 23],
-        ['4 Stars', 15],
-        ['3 Stars',  12],
-        ['2 Stars', 2],
-        ['1 Stars', 1]
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
       options: {
         width: 700,
@@ -140,16 +125,33 @@ export default {
     GChart,
   },
   methods: {
+    async getData() {
+      await this.ratingStore.fetch();
+      await this.reviewStore.fetch();
+      this.ratings = this.ratingStore.ratings;
+      this.reviews = this.reviewStore.reviews;
+    },
     showMenu() {
       this.showMobileMenu = !this.showMobileMenu;
     },
     onClickItem(id, url) {
       this.activeId = id;
-      if (url != '') {
-        this.$router.push(url);
-      }
+      this.$router.push(url);
     },
   },
+  computed: {
+    ratingStat() {
+      const data = this.ratings.reduce((prev, curr) => {
+        const key = `Rating ${curr.count}`
+        if (!prev[key]) {
+          prev[key] = 0;
+        }
+        prev[key]++;
+        return prev;
+      }, {});
+      return [['Rating', 'Score'], ...Object.entries(data)]
+    }
+  }
 };
 </script>
 

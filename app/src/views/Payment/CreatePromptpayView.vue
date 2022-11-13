@@ -106,8 +106,8 @@ export default {
         {label: 'จ่ายเงิน', icon: 'payment', router: '/employee/payment/create-promptpay', activeId: 1},
         {label: 'อาหารที่ต้องเสิร์ฟ', icon: 'room_service', router: '/employee/order/serve', activeId: 0},
         {label: 'อาหารที่ต้องทำ', icon: 'soup_kitchen', router: '/employee/order/order-to-do', activeId: 0},
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
-      activeId:0,
       loopCount: 5,
       billOrderItem: [
         {amount: 2, name: 'ข้าวมันไก่', price: 60},

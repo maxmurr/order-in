@@ -1,26 +1,3 @@
-<!-- /TODO:
-  ใช้ข้อมูล
-  order description:
-  -order id
-  -order_status = ''
-  -food id > food name food image
-  -price(ราคารวมอาหารที่สั่งในorderนั้นทั้งหมด foodprice*quantity ??)
-  -quantity
-  -request
-
-  computed:
-  totalprice = ราคารวมทุกorderที่สั่ง ไม่รวมที่ยกเลิกไปแล้ว
-  //ขึ้นที่แถบด้านล่าง
-
-  methods:
-  -saveNewOrder() = กดปุ่ม 'สั่ง' แล้วรายการอาหารที่อยู่ในถาดจะsaveไปที่new order & status กลายเป็นรอทำ
-
-  อยู่ในcomponents
-  - TopAppBar.vue > goBack() = ย้อนกลับไปหน้าที่แล้ว
-  - OrderItem.vue
-    (DeletePopupในOrderConfirmDeletePopup = popupให้confirm deleteOrder)
-      > deleteOrder() = กดปุ่ม'เอาออก'เพื่อยืนยัน แล้วลบorderที่ได้เอามาใส่ในถาด
-  / -->
 <template>
     <div class="relative">
         <div>
@@ -28,15 +5,9 @@
         </div>
         <div class="py-4">
           <OrderItem
-            v-for="(order,index) in orders"
-            :id="index"
-            :order_status="order.order_status"
-            :food_image="order.food_image"
-            :food_name="order.food_name"
-            :order_price="order.order_price"
-            :order_quantity="order.order_quantity"
-            :order_request="order.order_request"
-            :key="index"
+            v-for="order, i in cart"
+            :order="order"
+            :key="i"
             >
           </OrderItem>
         </div>
@@ -68,6 +39,7 @@
 <script>
 import TopAppBar from '../../components/TopAppBar/TopAppBar.vue';
 import OrderItem from '../../components/OrderItem/OrderItem.vue';
+import { useOrderStore } from '../../stores/order';
 
 
 export default {
@@ -76,45 +48,35 @@ export default {
     OrderItem,
   },
 
+  setup() {
+    const orderStore = useOrderStore();
+    return {orderStore};
+  },
+
   data() {
-    return {
-      orders: [
-        {
-          order_status: '',
-          food_image: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          food_name: 'ข้าวมันไก่',
-          order_price: 135,
-          order_quantity: '3',
-          order_request: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-        {
-          order_status: '',
-          food_image: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          food_name: 'ข้าวมันไก่',
-          order_price: 90,
-          order_quantity: '2',
-          order_request: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-        {
-          order_status: '',
-          food_image: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          food_name: 'ข้าวมันไก่',
-          order_price: 45,
-          order_quantity: '1',
-          order_request: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-      ],
+    return { 
+      cart: [],
+      orderedItems: []
     };
   },
 
-  methods: {
-    saveNewOrder() {
+  mounted() {
+    this.getOrderItems();
+  },
 
+  methods: {
+    async getOrderItems() {
+      this.orderedItems = this.orderStore.foodItemsInTray;
     },
   },
   computed: {
     totalPrice() {
-      return this.orders.reduce((prev, {order_price}) => prev + order_price, 0);
+      return this.orderedItems.reduce((prev, curr) => {
+          return prev + (curr.order_description
+          ? curr.order_description.reduce(
+            (prev, curr) => prev + (curr.order_price * curr.order_quantity), 0)
+          : 0
+        )}, 0)
     },
   },
 };

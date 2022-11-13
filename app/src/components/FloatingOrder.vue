@@ -1,13 +1,13 @@
 <template>
   <div class="flex gap-2">
-    <button class="floating-order-bar order-detail-bar">
+    <button class="floating-order-bar order-detail-bar" @click="onClickGoToCurrentOrder">
       <span class="material-symbols-outlined">
         shopping_cart
       </span>
       <div class="order-detail">
         <span>{{totalItem}}</span>
         <div class="flex ml-[14px]">
-          <div
+          <!-- <div
             class="order-item-image"
             v-for="item,id in currentOrder"
             :key="id"
@@ -16,14 +16,15 @@
               'background-position': 'center',
               'background-size': 'cover',
               'margin-left': '-14px',
-              'z-index': totalItem-id,
+              'z-index': 10,
             }"
-          />
+          /> -->
         </div>
         <span>฿{{totalPrice}}</span>
       </div>
     </button>
-    <button class="floating-order-bar order-history-icon">
+    <button @click="onClickToGoToAllOrders"
+      class="floating-order-bar order-history-icon">
       <span class="material-symbols-outlined">
         history
       </span>
@@ -32,47 +33,27 @@
   </template>
 
 <script>
+import { useOrderStore } from "../stores/order";
 export default {
-  data() {
-    return {
-      currentOrder: [
-        {
-          image: 'https://static.thairath.co.th/media/4DQpjUtzLUwmJZZSB1IF6ikXAJtDweXz91ROx3aJfaHu.jpg',
-          price: 40,
-        },
-        {
-          image: 'https://static.thairath.co.th/media/4DQpjUtzLUwmJZZSB1IF6ikXAJtDweXz91ROx3aJfaHu.jpg',
-          price: 10,
-        },
-        {
-          image: 'https://static.thairath.co.th/media/4DQpjUtzLUwmJZZSB1IF6ikXAJtDweXz91ROx3aJfaHu.jpg',
-          price: 140,
-        },
-        {
-          image: 'https://static.thairath.co.th/media/4DQpjUtzLUwmJZZSB1IF6ikXAJtDweXz91ROx3aJfaHu.jpg',
-          price: 140,
-        },
-      ],
-    };
+  setup() {
+    const orderStore = useOrderStore();
+    return {orderStore};
   },
-  props: {},
   computed: {
     totalItem() {
-      return this.currentOrder.length;
+      return this.orderStore.foodItemsInTray.length;
     },
     totalPrice() {
-      return this.currentOrder.reduce((prev, {price}) => prev + price, 0);
+      return this.orderStore.foodItemsInTray.reduce((prev, {food_price}) => prev + food_price, 0);
     },
   },
   methods: {
     onClickToGoToAllOrders() {
-      if (this.url != '') {
-        this.$router.push(this.url);
-      }
+      this.$router.push({name: 'order-history-list'});
     },
-    async orderHistory(food) {
-
-    },
+    onClickGoToCurrentOrder() {
+      this.$router.push({name: 'order-detail'});
+    }
   },
 };
 </script>

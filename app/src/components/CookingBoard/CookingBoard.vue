@@ -10,14 +10,14 @@
     </div>
     <div>
         <p class="label-small">เพิ่มเติมจากลูกค้า</p>
-        <p>{{ foodDescription }}</p>
+        <p>{{ orderRequest }}</p>
     </div>
  </div>
 </template>
 
 <script>
 export default {
-  props: ['id', 'tableNumber', 'foodName', 'foodDescription'],
+  props: ['id', 'tableNumber', 'foodName', 'orderRequest'],
 };
 </script>
 

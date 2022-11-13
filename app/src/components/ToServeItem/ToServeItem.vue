@@ -44,13 +44,9 @@
 </template>
 
 <script>
+
 export default {
-  props: ['tableNumber', 'orders'],
-  methods: {
-    // serveDone() = กดยืนยันว่าorderนั้นได้เสิร์ฟแล้ว
-    // แล้วorder_status เป็น 'ส่งถึงโต๊ะแล้ว'>ไม่แสดงในหน้าtoserveอีก
-    serveDone() {},
-  },
+  props: ['tableNumber', 'orders', 'serveDone'],
 };
 </script>
 

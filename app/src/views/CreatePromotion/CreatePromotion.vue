@@ -52,7 +52,7 @@
 
 
       <div class="main-content-create-management">
-        <div class="basis-2/5 mb-8">
+        <div class="basis-1/4 mb-8">
           <div v-if="previewImage">
             <div>
               <img class="preview my-3" :src="previewImage" alt="" />
@@ -65,6 +65,7 @@
                     type="file"
                     accept="image/*"
                     ref="file"
+                    name="image"
                     @change="selectImage"
                 />
               </label>
@@ -76,15 +77,19 @@
         </div>
 
 
-        <div class="basis-3/5 ml-5">
+        <div class="basis-3/4 ml-5">
+          <h3 class="body-large">รหัสส่วนลด</h3>
+          <input type="text" class="input-create-menu" v-model="promotion.promotion_code">
           <h3 class="body-large">ชื่ออาหาร</h3>
-          <input type="text" class="input-create-menu" v-model="food.food_name">
+          <input type="text" class="input-create-menu" v-model="promotion.name">
+          <h3 class="body-large">คำอธิบายโปรโมชัน</h3>
+          <input type="text" class="input-create-menu" v-model="promotion.description">
           <h3 class="body-large">ราคาโปรโมชัน</h3>
-          <input type="text" class="input-create-menu" v-model="promotion.promotion_price">
+          <input type="text" class="input-create-menu" v-model="promotion.discount_amount">
           <h3 class="body-large">วันเริ่มโปรโมชัน</h3>
-          <input type="text" class="input-create-menu" v-model="promotion.start_date">
+          <input type="text" class="input-create-menu" v-model="promotion.begin_useable_date">
           <h3 class="body-large">วันสิ้นสุดโปรโมชัน</h3>
-          <input type="text" class="input-create-menu" v-model="promotion.end_date">
+          <input type="text" class="input-create-menu" v-model="promotion.end_useable_date">
         </div>
       </div>
       <div class="grid justify-items-end mb-10">
@@ -105,6 +110,7 @@ import SectionHeader from '../../components/NavBarDrawer/SectionHeader.vue';
 import NavItem from '../../components/NavBarDrawer/NavItem.vue';
 import FoodCard from '../../components/FoodCard/FoodCard.vue';
 import UploadService from '../../services/UploadFilesService.js';
+import { promotionAPI } from "../../services/api.js";
 
 export default {
 
@@ -137,44 +143,36 @@ export default {
         {label: 'สรุปข้อมูล', icon: 'signal_cellular_alt', router: '/management/dashboard' ,activeId: 0,},
         {label: 'รายการอาหาร', icon: 'restaurant_menu', router: '/management/menu',activeId: 0,},
         {label: 'โปรโมชัน', icon: 'grid_view', router: '/management/promotion',activeId: 1,},
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
-      food: {
-        food_name: '',
-      },
       promotion: {
-        promotion_price: '',
-        start_date: '',
-        end_date: '',
+        promotion_code: null,
+        name: null,
+        description: null,
+        discount_amount: null,
+        begin_useable_date: null,
+        end_useable_date: null,
+        image: null,
       },
     };
   },
   methods: {
     async saveNewPromotion() {
       try {
-        // upload image file
-        this.progress = 0;
+        const fd = new FormData();
+        fd.append('promotion_code', this.promotion.promotion_code)
+        fd.append('name', this.promotion.name)
+        fd.append('description', this.promotion.description)
+        fd.append('discount_amount', this.promotion.discount_amount)
+        fd.append('begin_useable_date', this.promotion.begin_useable_date)
+        fd.append('end_useable_date', this.promotion.end_useable_date)
+        fd.append('image', this.currentImage)
 
-        UploadService.upload(this.currentImage, (event) => {
-          this.progress = Math.round((100 * event.loaded) / event.total);
-        })
-            .then((response) => {
-              this.message = response.data.message;
-              return UploadService.getFiles();
-            })
-            .then((images) => {
-              this.imageInfos = images.data;
-            })
-            .catch((err) => {
-              this.progress = 0;
-              this.message = 'Could not upload the image! ' + err;
-              this.currentImage = undefined;
-            });
-        // save new promotion
         this.error = null;
-        const promotion_id = await this.promotion_store.add(this.promotion);
-        if (promotion_id) {
-          SocketioService.sendToServer('CreatePromotion', {success: true} );
-          this.$router.push(`/${promotion_id}`);
+        const response = await promotionAPI.saveNew(fd);
+        this.$router.push(`/management/promotion`);
+        if (response.status_code == 201) {
+          console.log(response.data);
         }
       } catch (error) {
         console.log(error);
@@ -196,8 +194,6 @@ export default {
     selectImage() {
       this.currentImage = this.$refs.file.files.item(0);
       this.previewImage = URL.createObjectURL(this.currentImage);
-      this.progress = 0;
-      this.message = '';
     },
   },
   mounted() {

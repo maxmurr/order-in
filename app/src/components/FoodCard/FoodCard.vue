@@ -1,18 +1,19 @@
 <!-- eslint-disable vue/no-dupe-keys -->
 <template>
   <div class="food-card">
-    <img :src="image" :alt="`an image of ${name}`"
-      class="food-card-image">
-    <div class="flex p-5 justify-between">
+    <img :src="image" :alt="`an image of ${name}`" class="food-card-image" />
+    <div class="flex p-2 justify-between">
       <div>
         <h3 class="label-large --md-sys-color-on-primary-container">
           {{ name }}
         </h3>
         <p class="label-small --md-sys-color-on-primary">{{ price }} บาท</p>
       </div>
-      <div class="items-center">
-        <button class="w-8 h-8 secondary-container
-        rounded-full p-1 justify-center">
+      <div v-if="!buttonDisabled" class="items-center">
+        <button
+          @click="goToMenuDetail"
+          class="w-8 h-8 secondary-container rounded-full p-1 justify-center"
+        >
           <span class="material-symbols-outlined">add</span>
         </button>
       </div>
@@ -25,50 +26,26 @@ export default {
   data() {
     return {};
   },
-  // eslint-disable-next-line vue/no-dupe-keys
-  props: ['image', 'name', 'price'],
+  props: ["id", "image", "name", "price", "buttonDisabled"],
   methods: {
-    onClickAdd() {},
+    goToMenuDetail() {
+      this.$router.push (
+          {name: 'detail-menu', params: {foodId: this.id}}
+      );
+    }
   },
 };
 </script>
 
 <style scoped>
-.food-card{
-  margin-bottom: 4px;
-  border-radius: 30px;
+.food-card {
+  border-radius: 8px;
   background: var(--md-sys-color-primary-container);
 }
-.food-card-image{
-  border-radius: 30px 30px 0px 0px;
+.food-card-image {
+  border-radius: 8px 8px 0px 0px;
   height: 150px;
   width: 100%;
   object-fit: cover;
-}
-
-@media screen and (max-width: 768px) {
-  .food-card{
-    height: 300px;
-    width: 100%;
-    margin-bottom: 4px;
-    border-radius: 30px;
-    background: var(--md-sys-color-primary-container);
-  }
-  .food-card-image{
-    border-radius: 30px 30px 0px 0px;
-  }
-}
-
-@media screen and (max-width: 420px) {
-  .food-card{
-    height: 300px;
-    width: 40%;
-    margin-bottom: 4px;
-    border-radius: 30px;
-    background: var(--md-sys-color-primary-container);
-  }
-  .food-card-image{
-    border-radius: 30px 30px 0px 0px;
-  }
 }
 </style>

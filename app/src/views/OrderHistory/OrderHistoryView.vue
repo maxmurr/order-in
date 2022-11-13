@@ -1,117 +1,108 @@
-<!-- /TODO:
-  ใช้ข้อมูล
-  order description(ที่สั่งแล้ว):
-  -order id
-  -order_status = 'รอทำ', 'กำลังทำ', 'ส่งถึงโต๊ะแล้ว'
-  -food id > food name food image
-  -price(ราคารวมอาหารที่สั่งในorderนั้นทั้งหมด foodprice*quantity ??)
-  -quantity
-  -request
-
-  computed:
-  totalOrder = จำนวนรายการorderทั้งหมดที่customerสั่ง
-  totalprice = ราคารวมทุกorderที่สั่ง ไม่รวมที่ยกเลิกไปแล้ว
-  //ขึ้นที่แถบfloatinghistoryorder
-
-  methods:
-  อยู่ในcomponents
-  - TopAppBar.vue > goBack() = ย้อนกลับไปหน้าที่แล้ว
-  - HistoryItem.vue
-    (DeletePopupในOrderConfirmDeletePopup = popupให้confirm delete)
-      > deleteHistoryOrder() = กดปุ่ม'ยกเลิกอาหาร'
-      เพื่อยืนยันแล้วลบorderที่ได้สั่งไปแล้วแต่ยังอยู่ใน order_status 'รอทำ'
-  / -->
 <template>
-    <div class="relative">
-        <div>
-            <TopAppBar label="ประวัติ"></TopAppBar>
-        </div>
-        <div class="py-8">
-            <HistoryItem
-                v-for="(order,index) in orders"
-                :id="index"
-                :status="order.status"
-                :foodImage="order.foodImage"
-                :foodName="order.foodName"
-                :orderPrice="order.orderPrice"
-                :orderQuantity="order.orderQuantity"
-                :orderRequest="order.orderRequest"
-                :key="index"
-                >
-            </HistoryItem>
-        </div>
-        <div class="fixed left-0 bottom-0 w-full p-4">
-            <FloatingHistoryOrder class="mx-10"
-                :totalOrder="totalOrder"
-                :tprice="totalPrice"
-            />
-        </div>
-    </div>
+  <div class="overflow-x-auto relative">
+
+      <div>
+          <TopAppBar label="ประวัติ"></TopAppBar>
+      </div>
+
+      <div class="py-8">
+        <HistoryItem
+        v-for="(order, i) in orderHistoryList"
+        :status="order.order_status"
+        :foodImage="order.food_image.thumb"
+        :foodName="order.food_name"
+        :orderPrice="order.order_price"
+        :orderQuantity="order.order_quantity"
+        :foodDescription="order.order_request"
+        :key="i"
+      />
+      </div>
+
+      
+
+      <div class="fixed left-0 bottom-0 w-full p-4">
+          <FloatingHistoryOrder class="mx-10" 
+              :totalOrder="orderItemCount"
+              :tprice="totalOrderPrice">
+          </FloatingHistoryOrder>
+      </div>
+
+  </div>
 </template>
 
 <script>
-import FloatingHistoryOrder from '../../components/FloatingHistoryOrder.vue';
+// import axios from 'axios';
+import {useOrderStore} from '@/stores/order.js';
 import HistoryItem from '../../components/HistoryItem/HistoryItem.vue';
 import TopAppBar from '../../components/TopAppBar/TopAppBar.vue';
+import FloatingHistoryOrder from '../../components/FloatingHistoryOrder.vue';
 
 export default {
   components:
-    {
-      TopAppBar,
-      HistoryItem,
-      FloatingHistoryOrder,
-    },
+{
+  TopAppBar,
+  HistoryItem,
+  FloatingHistoryOrder,
+},
 
+  name: 'AllOrderView',
+  setup() {
+    const orderStore = useOrderStore();
+    return {orderStore};
+  },
+  created() {
+    this.getOrders();
+  },
   data() {
     return {
-      orders: [
-        {
-          status: 'รอทำ',
-          foodImage: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          foodName: 'ข้าวมันไก่',
-          orderPrice: 45,
-          orderQuantity: 1,
-          orderRequest: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-        {
-          status: 'กำลังทำ',
-          foodImage: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          foodName: 'ข้าวมันไก่',
-          orderPrice: 90,
-          orderQuantity: 2,
-          orderRequest: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-        {
-          status: 'ส่งถึงโต๊ะแล้ว',
-          foodImage: 'https://i.ytimg.com/vi/YgmYqZWW4V8/maxresdefault.jpg',
-          foodName: 'ข้าวมันไก่',
-          orderPrice: 135,
-          orderQuantity: 3,
-          orderRequest: 'ขอหนังล้วน ๆ ไม่เอาเนื้อไก่',
-        },
-      ],
+      orders: [],
     };
   },
-  computed: {
-    totalOrder() {
-      return this.orders.length;
-    },
-    totalPrice() {
-      return this.orders.reduce((prev, {orderPrice}) => prev + orderPrice, 0);
+
+  methods: {
+    async getOrders() {
+      await this.orderStore.fetch();
+      this.orders = this.orderStore.orders;
+    }, 
+    onRemoveOrder(id) {
+      this.orders = this.orders.filter((order) => order.id !== id);
     },
   },
+
+  // คำนวณจำนวนรายการที่สั่ง
+  computed: {
+    orderItemCount() {
+      let count = [];
+      this.orders.forEach((order) => {
+        count += order.order_quantity
+      });
+      if (count == 0) {
+        return 0;
+      } else {
+        return count[count.length - 1];
+      }
+    },
+    // คำนวณราคารวม
+    totalOrderPrice() {
+      let price = 0;
+      this.orders.forEach((order) => {
+        price += order.food_price * order.order_quantity;
+      });
+      return price;
+    },
+    orderHistoryList() {
+      const orderHistory = this.orders.reduce(
+        (prev, curr) => [...prev, ...curr.order_description],[]
+      );
+      console.log('eiei',orderHistory);
+      return orderHistory;
+    },
+
+  },
+
+  mounted() {
+    console.log('Order List Component Mounted');
+  },
+  
 };
-
 </script>
-
-<style>
-.cancel-button {
-    width: 90px;
-    height: 40px;
-    background: var( --md-sys-color-error);
-    color: var( --md-sys-color-on-primary);
-
-    /* outline */
-    border-radius: 100px;
-}
-</style>

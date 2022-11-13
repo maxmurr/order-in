@@ -3,7 +3,7 @@
   table:
     - table_id
     - table_available
-    - table_qrcode = qrcode ไปยังหน้า /menu ของtableนั้นๆ
+    - table_qrcode = qrcode ไปยังหน้า /menu ของtable นั้นๆ
 
   methods:
   -onclickdone() = เปลี่ยน table_available ของโต๊ะที่เลือกเป็น false
@@ -138,6 +138,7 @@ export default {
         { label: 'จ่ายเงิน', icon: 'payment', router: '/employee/payment/create-promptpay', activeId: 0 },
         { label: 'อาหารที่ต้องเสิร์ฟ', icon: 'room_service', router: '/employee/order/serve', activeId: 0 },
         { label: 'อาหารที่ต้องทำ', icon: 'soup_kitchen', router: '/employee/order/order-to-do', activeId: 0 },
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
     };
   },

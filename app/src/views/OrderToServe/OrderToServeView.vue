@@ -1,40 +1,14 @@
-<!-- /TODO:
-  ใช้ข้อมูล
-  table:
-  -table_id (โต๊ะที่สั่งorderนั้นๆ)
-
-  order description(ที่สั่งแล้ว):
-  -order id
-  -order_status = ดึงdataมาเฉพาะ status 'ยังไม่เสิร์ฟ'
-  -food id > food name
-  -quantity
-
-  computed:
-  totalOrder = จำนวนรายการorder เฉพาะที่ order_status ='ยังไม่เสิร์ฟ'
-
-  methods:
-  อยู่ในcomponent
-  -ToServeItem.vue > serveDone() = กดยืนยันว่าorderนั้นได้เสิร์ฟแล้ว
-  แล้ว order_status เป็น 'ส่งถึงโต๊ะแล้ว' (orderนั้นจะหายไปจากlist toserve)
-
-  navbar>
-    -showMenu() = กดเพื่อให้โชว์navbarที่ซ่อนไว้
-    อยู่ในcomponents
-    -NavBarEmployee.vue > onClickItem() = ส่งไปแต่ละหน้าตามurl
-  / -->
 <template>
   <div class="relative">
     <div class="flex flex-row main-content-employee-view">
       <div class="flex">
         <i>
           <button @click="showMenu()">
-            <span class="material-symbols-outlined">
-              menu
-            </span>
+            <span class="material-symbols-outlined"> menu </span>
           </button>
         </i>
         <div
-        class="
+          class="
             w-64
             absolute
             inset-y-0
@@ -45,22 +19,23 @@
             transition
             duration-200
             ease-in-out
-            "
-            :class="
+          "
+          :class="
             this.showMobileMenu ? 'relative -translate-x-0' : 'closed-menu'
-            "
+          "
         >
           <h3 class="flex headline-large ml-4 mb6-4">อร่อยโภชนา</h3>
           <SectionHeader label="สำหรับพนักงาน" />
           <NavItem
             v-for="(item, index) in navItems"
-              :id="index"
-              :label="item.label"
-              :active="item.activeId"
-              :url="item.router"
-              :onClickItem="onClickItem"
-              :key="index">
-            <span class="material-symbols-outlined">{{item.icon}}</span>
+            :id="index"
+            :label="item.label"
+            :active="item.activeId"
+            :url="item.router"
+            :onClickItem="onClickItem"
+            :key="index"
+          >
+            <span class="material-symbols-outlined">{{ item.icon }}</span>
           </NavItem>
         </div>
       </div>
@@ -75,6 +50,7 @@
             v-for="(table, index) in tableOrderList"
             :orders="table.order_description"
             :tableNumber="table.table_number"
+            :serveDone="() => onServedDone(index)"
             :key="index"
           >
           </ToServeItem>
@@ -85,10 +61,11 @@
 </template>
 
 <script>
-import NavItem from '../../components/NavBarDrawer/NavItem.vue';
-import SectionHeader from '../../components/NavBarDrawer/SectionHeader.vue';
-import ToServeItem from '../../components/ToServeItem/ToServeItem.vue';
-import {useOrderStore} from '../../stores/order';
+import NavItem from "../../components/NavBarDrawer/NavItem.vue";
+import SectionHeader from "../../components/NavBarDrawer/SectionHeader.vue";
+import ToServeItem from "../../components/ToServeItem/ToServeItem.vue";
+import { useOrderStore } from "../../stores/order";
+import { orderDescriptionApi } from "../../services/api";
 
 export default {
   components: {
@@ -99,7 +76,7 @@ export default {
 
   setup() {
     const orderStore = useOrderStore();
-    return {orderStore};
+    return { orderStore };
   },
 
   created() {
@@ -107,11 +84,28 @@ export default {
   },
 
   computed: {
+    orderToServeList(){
+      const orderToServe = this.tableOrderList.reduce((prev,curr) =>
+        [...prev, ...curr.order_description],[]);return orderToServe.order_status === 'พร้อมเสิร์ฟ';
+  },
     totalOrders() {
-      return this.orderList.length;
+      return this.tableOrderList.length;
     },
     tableOrderList() {
-      return this.orderList;
+      console.log(this.orderList);
+      return this.orderList.reduce(
+        (prev, curr) => {
+          const newOrderDescription = curr
+          .order_description
+          .filter((od) => od.order_status === "พร้อมเสิร์ฟ");
+
+          if (newOrderDescription.length){
+           return [...prev, {...curr,order_description: newOrderDescription,}]
+          }
+          return prev
+        },
+        []
+      );
     },
   },
 
@@ -122,14 +116,27 @@ export default {
     },
     async fetchOrder() {
       await this.orderStore.fetch();
-      const orderList = this.orderStore.orders.data;
+      console.log(this.orderStore.orders);
+      const orderList = this.orderStore.orders;
       this.orderList = orderList;
       console.log(this.orderList);
     },
     onClickItem(id, url) {
       this.activeId = id;
-      if (url != '') {
+      if (url != "") {
         this.$router.push(url);
+      }
+    },
+    onServedDone(orderIndex) {
+      let success = true;
+      const servedOrderItem = this.tableOrderList[orderIndex].order_description;
+      servedOrderItem.forEach(async (oitem) => {
+        let response = await orderDescriptionApi.updateStatus(oitem.id);
+        response = response.data || response;
+      });
+
+      if (success) {
+        this.fetchOrder();
       }
     },
   },
@@ -140,10 +147,31 @@ export default {
       orderList: [],
 
       navItems: [
-        {label: 'รับลูกค้าใหม่', icon: 'sentiment_satisfied', router: '/employee/new-customer',activeId: 0,},
-        {label: 'จ่ายเงิน', icon: 'payment', router: '/employee/payment/create-promptpay',activeId: 0,},
-        {label: 'อาหารที่ต้องเสิร์ฟ', icon: 'room_service', router: '/employee/order/serve',activeId: 1,},
-        {label: 'อาหารที่ต้องทำ', icon: 'soup_kitchen', router: '/employee/order/order-to-do',activeId: 0,},
+        {
+          label: "รับลูกค้าใหม่",
+          icon: "sentiment_satisfied",
+          router: "/employee/new-customer",
+          activeId: 0,
+        },
+        {
+          label: "จ่ายเงิน",
+          icon: "payment",
+          router: "/employee/payment/create-promptpay",
+          activeId: 0,
+        },
+        {
+          label: "อาหารที่ต้องเสิร์ฟ",
+          icon: "room_service",
+          router: "/employee/order/serve",
+          activeId: 1,
+        },
+        {
+          label: "อาหารที่ต้องทำ",
+          icon: "soup_kitchen",
+          router: "/employee/order/order-to-do",
+          activeId: 0,
+        },
+        { label: "ออกจากระบบ", icon: "logout", router: "/logout", activeId: 0 },
       ],
     };
   },

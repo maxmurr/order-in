@@ -6,7 +6,7 @@
   >
     <div class="banner-backdrop"></div>
     <p class="headline-small text-white
-    absolute bottom-4 left-4">{{ section }}</p>
+    absolute bottom-4 left-4">{{ headerText }}</p>
   </div>
 </template>
 
@@ -14,7 +14,7 @@
 export default {
   props: [
     'image',
-    'section',
+    'headerText',
   ],
   methods: {
     onClick() {
@@ -36,6 +36,7 @@ export default {
 <style>
 .banner-container {
   position: relative;
+  width: 200px;
   height: 128px;
   border-radius: 16px;
   overflow: hidden;
@@ -43,7 +44,7 @@ export default {
 
 @media (min-width: 640px) {
   .banner-container {
-    width: 50%;
+    width: 100%;
   }
 }
 
@@ -66,8 +67,6 @@ export default {
 
   .banner-backdrop {
     position: absolute;
-    width: 50%;
-    height: 50%;
     background: linear-gradient(180deg,
     rgba(0, 0, 0, 0) 20%,
     rgba(0, 0, 0, 0.8) 100%);

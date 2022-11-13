@@ -2,7 +2,7 @@ import axios from 'axios';
 
 
 const axiosInstance = axios.create({
-  baseURL: 'https://purple-rabbit-56.loca.lt/api',
+  baseURL: 'https://api-production-6bdc.up.railway.app/api',
 });
 
 
@@ -17,6 +17,14 @@ axiosInstance.interceptors.request.use((request) => {
 });
 
 export const authAPI = {
+  async me() {
+    const response = await axiosInstance.post('/auth/me');
+
+    if (response.status == 200) {
+      return response.data;
+    }
+
+  },
   async login(user) {
     const response = await axiosInstance.post('/auth/login', user);
 
@@ -24,14 +32,13 @@ export const authAPI = {
       return response.data;
     }
   },
-
+  async registerEmployee(user) {
+    const response = await axiosInstance.post('/auth/register/employee', user);
+    return response;
+  },
   async addCustomer(table_id){
     const response = await axiosInstance.post('/auth/register/customer', {table_id});
-    console.log(response)
-
-    if (response.status == 201) {
-      return response.data;
-    }
+    return response.data;
   }
 };
 
@@ -250,13 +257,15 @@ export const foodAPI = {
     return [];
   },
   async saveNew(food) {
-    const response = await axiosInstance.post('/foods', food);
-    if (response.status === 201) {
-      return response.data;
-    }
-    return {
-      success: false,
-    };
+    const response = await axiosInstance.post(
+        '/foods',
+        food,
+        {headers: {
+        "Content-Type": `multipart/form-data; boundary=${food._boundary}`,
+        "Access-Control-Allow-Origin": "*"
+      }});
+
+    return reponse;
   },
 
   async update(food) {
@@ -325,7 +334,7 @@ export const foodAllergyAPI = {
 export const orderApi = {
   async getAll() {
     const response = await axiosInstance.get(
-        '/orders?ofuser=1',
+        '/orders',
     );
     if (response.status === 200) {
       return response.data;
@@ -333,6 +342,24 @@ export const orderApi = {
     return [];
   },
 
+  async saveNew(order) {
+    const response = await axiosInstance.post('/orders', order);
+    if (response.status === 201) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
+  async placeNew(order) {
+    const response = await axiosInstance.post('/orders/place', order);
+    if (response.status === 201) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
   async saveNew(order) {
     const response = await axiosInstance.post('/orders', order);
     if (response.status === 201) {
@@ -366,7 +393,69 @@ export const orderApi = {
       success: false,
     };
   },
+
+  delete(orderNumber) {
+    return axiosInstance.delete(`/orders/${orderNumber}`);
+  }
 };
+
+export const orderDescriptionApi = {
+  async getAll() {
+    const response = await axiosInstance.get(
+        '/orders?ofuser=1',
+    );
+    if (response.status === 200) {
+      return response.data;
+    }
+    return [];
+  },
+
+  async saveNew(order) {
+    const response = await axiosInstance.post('/orderDescriptions', order);
+    if (response.status === 201) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
+
+  async update(order) {
+    const response = await axiosInstance.put(
+        `/orderDescriptions/${order.order_number}`, order,
+    );
+    if (response.status === 200) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
+
+  async updateStatus(orderDescriptionId) {
+    const response = await axiosInstance.post(
+        `/orderDescriptions/updateStatus/${orderDescriptionId}`);
+    if (response.status === 200) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
+
+  async get(orderNumber) {
+    const response = await axiosInstance.get(
+        `/orderDescriptions/${orderNumber}`,
+    );
+    if (response.status === 200) {
+      return response.data;
+    }
+    return {
+      success: false,
+    };
+  },
+};
+
 
 export const tableAPI = {
   async getAll() {

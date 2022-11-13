@@ -58,6 +58,7 @@
               <img class="preview my-3" :src="previewImage" alt="" />
             </div>
           </div>
+
           <div class="row">
             <div >
               <label class="btn btn-default p-0">
@@ -65,6 +66,8 @@
                     type="file"
                     accept="image/*"
                     ref="file"
+                    id="browse"
+                    name="image"
                     @change="selectImage"
                 />
               </label>
@@ -78,16 +81,17 @@
         <div class="basis-3/4 ml-5">
           <h3 class="body-large">ชื่ออาหาร</h3>
           <input type="text" class="input-create-menu" v-model="food.food_name">
-          <h3 class="body-large">ประเภทอาหาร</h3>
-          <input type="text" class="input-create-menu" v-model="food.food_type">
           <h3 class="body-large">ราคา</h3>
           <input type="text" class="input-create-menu" v-model="food.food_price">
           <h3 class="body-large">คำอธิบายอาหาร</h3>
           <textarea class="textarea-create-menu" v-model="food.food_detail"></textarea>
-          <h3 class="body-large">ข้อมูลสำหรับการแพ้อาหาร</h3>
-          <textarea class="textarea-create-menu" v-model="food.food_allergy"></textarea>
           <h3 class="body-large">เวลาในการจัดทำอาหาร</h3>
           <input type="text" class="input-create-menu" v-model="food.cooking_time">
+          <h3 class="body-large">ประเภทอาหาร</h3>
+          <input type="text" class="input-create-menu" v-model="category_str">
+          <h3 class="body-large">ข้อมูลสำหรับการแพ้อาหาร</h3>
+          <textarea class="textarea-create-menu" v-model="allery_str"></textarea>
+
         </div>
 
       </div>
@@ -109,7 +113,8 @@ import SectionHeader from '../../components/NavBarDrawer/SectionHeader.vue';
 import NavItem from '../../components/NavBarDrawer/NavItem.vue';
 import FoodCard from '../../components/FoodCard/FoodCard.vue';
 import UploadService from '../../services/UploadFilesService.js';
-
+import { foodAPI } from '../../services/api.js';
+import axios from "axios";
 export default {
   /*To Do List
 *
@@ -127,6 +132,9 @@ export default {
 * */
   data() {
     return {
+      category_str: '',
+      allery_str: '',
+
       showMobileMenu: false,
       currentImage: undefined,
       previewImage: undefined,
@@ -142,44 +150,43 @@ export default {
         {label: 'สรุปข้อมูล', icon: 'signal_cellular_alt', router: '/management/dashboard' ,activeId: 0,},
         {label: 'รายการอาหาร', icon: 'restaurant_menu', router: '/management/menu',activeId: 1,},
         {label: 'โปรโมชัน', icon: 'grid_view', router: '/management/promotion',activeId: 0,},
+        {label: 'ออกจากระบบ', icon: 'logout', router: '/logout', activeId:0}
       ],
       food: {
-        food_name: '',
-        food_type: '',
-        food_price: '',
-        food_detail: '',
-        food_allergy: '',
-        cooking_time: '',
+        food_name: null,
+        food_price: null,
+        food_detail: null,
+        cooking_time: null,
+        category_ids : null,
+        food_allery_ids: null,
+        image: null,
       },
     };
   },
   methods: {
     async saveNewFood() {
       try {
-        // upload image file
-        this.progress = 0;
+        this.food.category_ids = this.category_str.split(",");
+        this.food.food_allery_ids = this.allery_str.split(",");
 
-        UploadService.upload(this.currentImage, (event) => {
-          this.progress = Math.round((100 * event.loaded) / event.total);
-        })
-            .then((response) => {
-              this.message = response.data.message;
-              return UploadService.getFiles();
-            })
-            .then((images) => {
-              this.imageInfos = images.data;
-            })
-            .catch((err) => {
-              this.progress = 0;
-              this.message = 'Could not upload the image! ' + err;
-              this.currentImage = undefined;
-            });
-        // save new food
+        const fd = new FormData();
+        fd.append('food_name', this.food.food_name)
+        fd.append('food_price', this.food.food_price)
+        fd.append('food_detail', this.food.food_detail)
+        fd.append('cooking_time', this.food.cooking_time)
+        for (let i = 0; i < this.food.category_ids.length; i++){
+          fd.append('category_ids[]', this.food.category_ids[i])
+        }
+        for (let i = 0; i < this.food.food_allery_ids.length; i++){
+          fd.append('food_allery_ids[]', this.food.food_allery_ids[i])
+        }
+        fd.append('image', this.currentImage)
+
         this.error = null;
-        const food_id = await this.food_store.add(this.food);
-        if (food_id) {
-          SocketioService.sendToServer('CreateMenu', {success: true} );
-          this.$router.push(`/${food_id}`);
+        const response = await foodAPI.saveNew(fd);
+        this.$router.push(`/management/menu`);
+        if (response.status_code == 201) {
+          console.log(response.data);
         }
       } catch (error) {
         console.log(error);
@@ -201,8 +208,6 @@ export default {
     selectImage() {
       this.currentImage = this.$refs.file.files.item(0);
       this.previewImage = URL.createObjectURL(this.currentImage);
-      this.progress = 0;
-      this.message = '';
     },
   },
   mounted() {
